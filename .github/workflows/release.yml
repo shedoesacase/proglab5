@@ -17,6 +17,25 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install dependencies (Ubuntu only)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev \
+            libxrandr-dev \
+            libudev-dev \
+            libfreetype6-dev \
+            libopenal-dev \
+            libflac-dev \
+            libvorbis-dev \
+            libgl1-mesa-dev \
+            ninja-build
+
+      - name: Install dependencies (Windows only)
+        if: runner.os == 'Windows'
+        run: choco install ninja -y
+
       - name: Configure CMake
         run: cmake -G "Ninja" -S . -B build
 
