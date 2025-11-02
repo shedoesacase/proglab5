@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write 
+
 jobs:
   build_and_release:
     strategy:
@@ -48,14 +49,16 @@ jobs:
       - name: Install package
         run: cmake --install build --prefix package
 
-      - name: Create archive
+      - name: Create archive (Linux)
+        if: runner.os == 'Linux'
         run: |
           cd package
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            powershell Compress-Archive -Path * -DestinationPath ../physics-windows.zip
-          else
-            tar -czf ../physics-linux.tgz *
-          fi
+          tar -czf ../physics-linux.tgz *
+
+      - name: Create archive (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          powershell Compress-Archive -Path package\* -DestinationPath physics-windows.zip
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
