@@ -17,7 +17,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Linux dependencies
       - name: Install dependencies (Ubuntu)
         if: runner.os == 'Linux'
         run: |
@@ -25,41 +24,31 @@ jobs:
           sudo apt-get install -y \
             libx11-dev \
             libxrandr-dev \
-            libxcursor-dev \
             libudev-dev \
             libfreetype6-dev \
             libopenal-dev \
             libflac-dev \
             libvorbis-dev \
             libgl1-mesa-dev \
+            libxcursor-dev \
             ninja-build
 
-      # Windows dependencies
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
         run: |
-          choco install ninja -y
-          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+          choco install ninja -y --no-progress
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y --no-progress
 
-      # Configure CMake
-      - name: Configure
-        run: |
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            cmake -G "MinGW Makefiles" -S . -B build
-          else
-            cmake -G "Ninja" -S . -B build
-          fi
-        shell: bash
+      - name: Configure CMake
+        run: cmake -G "Ninja" -S . -B build
 
-      # Build with verbose output
-      - name: Build
-        run: cmake --build build --config Release --verbose
+      - name: Build project
+        run: cmake --build build --config Release
 
-      # Package install
-      - name: Package
+      - name: Install (package)
         run: cmake --install build --prefix package
 
-      - name: Upload artifacts
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: physics-${{ matrix.os }}
