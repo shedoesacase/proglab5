@@ -1,11 +1,13 @@
-name: C++ CI
+name: C++ CI + Release
 
 on:
   push:
     branches: [ master ]
 
+permissions:
+  contents: write 
 jobs:
-  build:
+  build_and_release:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -14,8 +16,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Install dependencies (Ubuntu)
         if: runner.os == 'Linux'
@@ -42,14 +42,29 @@ jobs:
       - name: Configure CMake
         run: cmake -G "Ninja" -S . -B build
 
-      - name: Build project
+      - name: Build
         run: cmake --build build --config Release
 
-      - name: Install (package)
+      - name: Install package
         run: cmake --install build --prefix package
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - name: Create archive
+        run: |
+          cd package
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            powershell Compress-Archive -Path * -DestinationPath ../physics-windows.zip
+          else
+            tar -czf ../physics-linux.tgz *
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: physics-${{ matrix.os }}
-          path: package/
+          tag_name: "build-${{ github.run_number }}"
+          name: "Build ${{ github.run_number }}"
+          body: "сборка"
+          files: |
+            physics-windows.zip
+            physics-linux.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
